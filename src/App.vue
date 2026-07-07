@@ -7,7 +7,14 @@ import { routerLinks } from '@/router/list-routes';
 </script>
 
 <template>
-  Aplicación de Vue 3 Intermedio.
+  <header>
+    <NavBar 
+      title="PokémonApp" 
+      :links="routerLinks"
+    />
+  </header>
+
+  <RouterView />
 </template>
 
 <style scoped>
