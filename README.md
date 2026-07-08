@@ -124,6 +124,47 @@ graph LR
 
 ### 📊 **Comparación: Dos Enfoques de Gestión de Estado**
 
+```mermaid
+graph TB
+    subgraph A["❌ Opción 1: Solo Vue Query"]
+        A1["PokemonList.vue"]
+        A2["usePokemons()"]
+        A3["useQuery()"]
+        A1 -->|usa| A2
+        A2 -->|llama| A3
+        A4["✅ Simple<br/>❌ Estado 'volátil'<br/>❌ No reutilizable entre vistas"]
+    end
+    
+    subgraph B["⚠️ Opción 2: Reactive Store (Manual)"]
+        B1["PokemonListNative.vue"]
+        B2["store.ts"]
+        B3["reactive() + métodos"]
+        B1 -->|importa| B2
+        B2 -->|usa| B3
+        B4["✅ Compartible<br/>⚠️ Manual & verbose<br/>⚠️ Sin devtools<br/>❌ No escalable"]
+    end
+    
+    subgraph C["✅ Opción 3: Pinia Store (Profesional)"]
+        C1["PokemonListPinia.vue"]
+        C2["storeWithPinia.ts"]
+        C3["defineStore() + Composition API"]
+        C1 -->|usa| C2
+        C2 -->|usa| C3
+        C4["✅ Compartible<br/>✅ Composable<br/>✅ Devtools Pinia<br/>✅ Modular & escalable<br/>✅ DevX moderno"]
+    end
+    
+    style A fill:#ffebee
+    style B fill:#fff3e0
+    style C fill:#e8f5e9
+```
+
+
+Ahora el proyecto tiene **3 implementaciones educativas**:
+1. **PokemonList.vue** → Solo Vue Query (más simple)
+2. **PokemonListNative.vue** → Vue Query + Reactive Store (intermedio)
+3. **PokemonListPinia.vue** → Vue Query + **Pinia Store** (profesional) ✨
+
+
 #### **Opción 1: PokemonList.vue (Solo Vue Query)**
 ```mermaid
 graph TD
@@ -158,7 +199,41 @@ graph TD
     style E fill:#fff3e0
 ```
 
+
+#### **Opción 3: PokemonListPinia.vue (Vue Query + Store usando Pinia)**
+
+```mermaid
+graph LR
+    Component["PokemonListPinia.vue"]
+    Hook["usePokemonStore()"]
+    Store["defineStore('pokemon')"]
+    State["State<br/>list, count, isLoading"]
+    Actions["Actions<br/>loadedPokemons()"]
+    
+    Component -->|llama| Hook
+    Hook -->|accede| Store
+    Store -->|maneja| State
+    Store -->|ejecuta| Actions
+    
+    Component -->|renderiza| State
+    Component -->|dispara| Actions
+```
+
+
+
+| Feature | Reactive | Pinia |
+|---------|----------|-------|
+| **DevTools** | ❌ No | ✅ Pinia DevTools |
+| **Time Travel** | ❌ No | ✅ Sí (debug) |
+| **Type Safety** | ⚠️ Parcial | ✅ Total |
+| **Testeable** | ⚠️ Difícil | ✅ Muy fácil |
+| **Composables** | ❌ No | ✅ Sí (`useStore()`) |
+| **Modularidad** | ⚠️ Todo en 1 file | ✅ Múltiples stores |
+| **Escalabilidad** | ❌ No | ✅ Profesional |
+
 ---
+
+
 
 ### 🎭 **Enrutamiento Jerárquico con Layout en /pokemons**
 En el caso de /pokemons, el component de la ruta es el PokemonLayout, y el resto va en los children.
