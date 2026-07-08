@@ -28,6 +28,12 @@ export const pokemonRoute: RouteRecordRaw = {
       component: () => import('@/pokemons/pages/PokemonListNative.vue'),
     },
     {
+      path: `/${ ROUTE_NAME }/list-pinia`,
+      props: { title: 'Listado Con Pinia', visible: true },
+      name: 'pokemon-list-pinia',
+      component: () => import('@/pokemons/pages/PokemonListPinia.vue'),
+    },
+    {
       path: `/${ ROUTE_NAME }/search`,
       props: { title: 'Búsqueda', visible: true },
       name: 'pokemon-search',
