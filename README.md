@@ -452,4 +452,231 @@ graph TD
 
 ---
 
-Esta estructura sigue **padrón profesional moderno** y enseña cómo construir aplicaciones Vue escalables con gestión robusta de estado asincrónico.
+## 🟢 **Módulo Avanzado: Clientes (CRUD + Paginación)**
+
+El módulo de **Clientes** es una extensión que introduce conceptos más avanzados: **CRUD completo, paginación, mutaciones y backend mock**.
+
+### 📋 **Características del Módulo**
+
+```mermaid
+graph LR
+    subgraph Read["📖 Lectura"]
+        UC["useClients()"]
+        UCM["useMutation()"]
+        UC -->|GET /clients?_page=| API1["API"]
+    end
+    
+    subgraph Write["✏️ Escritura"]
+        UCD["useClient()"]
+        MUT["useMutation()"]
+        UCD -->|PATCH /clients/:id| API2["API"]
+    end
+    
+    subgraph Pagination["📄 Paginación"]
+        STORE["useClientsStore()"]
+        STORE -->|setPage()| STATE["currentPage"]
+    end
+    
+    subgraph Backend["🗄️ Backend"]
+        JSON["json-server"]
+        DB["db.json"]
+        JSON --> DB
+    end
+    
+    UC --> STORE
+    UCD --> STORE
+    MUT --> API2
+    API1 --> JSON
+    API2 --> JSON
+    
+    style Read fill:#e3f2fd
+    style Write fill:#c8e6c9
+    style Pagination fill:#fff9c4
+    style Backend fill:#f3e5f5
+```
+
+---
+
+### 🔄 **Flujo: Lista de Clientes con Paginación**
+
+```mermaid
+sequenceDiagram
+    participant Page as 📄 ClientList.vue
+    participant Composable as 🧠 useClients()
+    participant Store as 💾 useClientsStore()
+    participant Query as ⚡ useQuery()
+    participant API as 🌐 json-server
+
+    Page->>Composable: Llama useClients()
+    Composable->>Store: storeToRefs(store)
+    Store->>Store: currentPage = 1
+    
+    Composable->>Query: useQuery(['clients?page=', 1])
+    Query->>API: GET /clients?_page=1
+    API-->>Query: { data: [], pages: 5, items: 50 }
+    
+    Query->>Store: watch(data)
+    Store->>Store: setClients(data)
+    Store->>Store: setTotalPages(5)
+    
+    Composable-->>Page: { clients, currentPage, totalPages }
+    Page->>Page: Renderiza listado + paginación
+    
+    Page->>Composable: getPage(2)
+    Composable->>Store: setPage(2)
+    Store->>Store: currentPage = 2
+    Note over Query: Query se re-ejecuta<br/>porque currentPage cambió
+    Query->>API: GET /clients?_page=2
+```
+
+---
+
+### 💾 **Pinia Store: useClientsStore()**
+
+```typescript
+// Maneja estado de paginación
+export const useClientsStore = defineStore('clients', () => {
+  // State
+  const clients = ref<Client[]>([]);
+  const currentPage = ref(1);
+  const totalPages = ref(0);
+
+  // Actions
+  const setClients = (data: Client[]) => {
+    clients.value = data;
+  };
+
+  const setPage = (page: number) => {
+    currentPage.value = page;  // ← Triggeriza re-fetch en useQuery
+  };
+
+  return { clients, currentPage, totalPages, setClients, setPage };
+});
+```
+
+---
+
+### ✏️ **Flujo: Actualizar Cliente con useMutation**
+
+```mermaid
+sequenceDiagram
+    participant Form as 📝 ClientPage.vue
+    participant Composable as 🧠 useClient(id)
+    participant Mutation as 🔄 useMutation()
+    participant API as 🌐 json-server
+
+    Form->>Composable: Edita formulario
+    
+    Form->>Form: click en 'Guardar'
+    Form->>Composable: updateClient(clientData)
+    
+    Composable->>Mutation: mutate(client)
+    Mutation->>API: PATCH /clients/123
+    
+    Note over API: API procesa<br/>actualización
+    
+    API-->>Mutation: ✅ Cliente actualizado
+    Mutation->>Composable: isUpdating = false
+    Composable-->>Form: Mostrar confirmación
+    
+    Form->>Form: Opcional: Refrescar lista
+```
+
+---
+
+### 🔧 **Composable: useClient() con Mutaciones**
+
+```typescript
+const useClient = (id: number) => {
+  const client = ref<Client>();
+
+  // Lectura
+  const { isLoading, data, isError } = useQuery({
+    queryKey: ['client', id],
+    queryFn: () => getClient(id),
+  });
+
+  // Escritura
+  const clientMutation = useMutation({
+    mutationFn: (client: Client) => updateClient(client),
+    // onSuccess: () => { refrescar lista },
+    // onError: () => { mostrar error },
+  });
+
+  watch(data, () => {
+    if (data.value) client.value = { ...data.value };
+  }, { immediate: true });
+
+  return {
+    client,
+    clientMutation,
+    isLoading,
+    isUpdating: computed(() => clientMutation.isPending.value),
+    updateClient: clientMutation.mutate,
+  };
+};
+```
+
+---
+
+### 🗄️ **Backend Mock: json-server**
+
+```bash
+npm run backend-server
+# Inicia servidor en http://localhost:3001
+```
+
+**Archivo: db/db.json**
+```json
+{
+  "clients": [
+    {
+      "id": "1",
+      "name": "Barrera Knight",
+      "email": "barrera@example.com",
+      "phone": "+1 (813) 462-3993",
+      "isActive": true
+    },
+    ...
+  ]
+}
+```
+
+**API Disponible:**
+- `GET /clients?_page=1` → Listado paginado
+- `GET /clients/1` → Cliente individual
+- `PATCH /clients/1` → Actualizar cliente
+- `POST /clients` → Crear cliente
+- `DELETE /clients/1` → Eliminar cliente
+
+---
+
+### 📊 **Comparación: Pokémons vs Clientes**
+
+| Característica | Pokémons | Clientes |
+|---|---|---|
+| **Tipo de datos** | API pública | Backend mock (json-server) |
+| **Operaciones** | Solo lectura | CRUD completo |
+| **Query Hooks** | `useQuery()` | `useQuery()` + `useMutation()` |
+| **Paginación** | No | Sí (con Pinia Store) |
+| **Estado Global** | Opcional (store reactivo) | Necesario (paginación) |
+| **Complejidad** | ⭐ Principiante | ⭐⭐⭐ Avanzado |
+| **Conceptos clave** | Lectura, composables | Mutations, paginación, backend |
+
+---
+
+### 🎓 **Conceptos Nuevos Introducidos por Clientes**
+
+| Concepto | Dónde | Explicación |
+|---|---|---|
+| **useMutation** | useClient.ts | Para operaciones de escritura (PATCH, POST, DELETE) |
+| **Paginación** | useClients.ts | Cambiar página triggerea nueva query automáticamente |
+| **storeToRefs** | useClients.ts | Extraer propiedades reactivas del store Pinia |
+| **watch + queryKey reactivo** | useClients.ts | Query se re-ejecuta cuando la página cambia |
+| **json-server** | Backend | Simular API REST real sin backend real |
+| **PATCH vs POST** | updateClient | PATCH para actualizar, POST para crear |
+| **Invalidación implícita** | useClients.ts | Considerar refrescar lista post-update |
+
+---
+
+Esta estructura sigue **padrón profesional moderno** y enseña cómo construir aplicaciones Vue escalables con gestión robusta de estado asincrónico, desde lectura simple hasta CRUD completo con paginación.
