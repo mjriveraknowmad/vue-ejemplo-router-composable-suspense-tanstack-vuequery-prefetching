@@ -462,19 +462,21 @@ El módulo de **Clientes** es una extensión que introduce conceptos más avanza
 graph LR
     subgraph Read["📖 Lectura"]
         UC["useClients()"]
-        UCM["useMutation()"]
-        UC -->|GET /clients?_page=| API1["API"]
+        API1["API"]
+        UC -->|GET /clients?_page=| API1
     end
     
     subgraph Write["✏️ Escritura"]
         UCD["useClient()"]
         MUT["useMutation()"]
-        UCD -->|PATCH /clients/:id| API2["API"]
+        API2["API"]
+        UCD -->|PATCH /clients/:id| API2
     end
     
-    subgraph Pagination["📄 Paginación"]
+    subgraph Pagination["📄 Paginacion"]
         STORE["useClientsStore()"]
-        STORE -->|setPage()| STATE["currentPage"]
+        PAGE["Page State"]
+        STORE -->|setPage| PAGE
     end
     
     subgraph Backend["🗄️ Backend"]
