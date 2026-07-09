@@ -13,5 +13,6 @@ export const routerLinks: RouterLink[] = [
   { path: '/about', name: 'about', title: 'About', visible: true },
   { path: '/counter', name: 'counter', title: 'Counter', visible: true },
   { path: '/pokemons', name: 'pokemons', title: 'Pokémons', visible: true },
+  { path: '/clients', name: 'clients', title: 'Clients', visible: true }
 ];
 
